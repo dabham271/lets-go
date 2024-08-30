@@ -10,6 +10,13 @@ import (
 // Define a home handler function which writes a byte slice containing
 // "Hello from Snippetbox" as the response body.
 func home(w http.ResponseWriter, r *http.Request) {
+
+  // Use the Header().Add() method to add a 'Server: Go' header to the
+  // response header map. The first parameter is the header name, and
+  // the second parameter is the header value.
+
+  w.Header().Add("Server", "Go")
+
   w.Write([]byte("Hello from Snippetbox"))
 }
 
@@ -24,14 +31,28 @@ func snippetView(w http.ResponseWriter, r *http.Request) {
     return
   }
 
+  fmt.Fprintf(w, "Display a specific snippet with ID %d...", id)
+
+  // w.Header().Set("Content-Type", "application/json")
+  // w.Write([]byte(`{"name":"Alex"}`))
+
   // Use the fmt.Sprintf() function to interpolate the id value with a
   // message, then write it as the HTTP response.
-  msg := fmt.Sprintf("Display a specific snippet with ID %d...", id)
-  w.Write([]byte(msg))
+  // msg := fmt.Sprintf("Display a specific snippet with ID %d...", id)
+  // w.Write([]byte(msg))
 }
 
 func snippetCreate(w http.ResponseWriter, r *http.Request) {
   w.Write([]byte("Display a form for creating a new snippet..."))
+}
+
+func snippetCreatePost(w http.ResponseWriter, r *http.Request) {
+
+  // Use the w.WriteHeader() method to send a 201 status code.
+  w.WriteHeader(http.StatusCreated)
+
+  // Then w.Write() method to write the response body as normal.
+  w.Write([]byte("Save a new snippet..."))
 }
 
 func main() {
@@ -39,9 +60,10 @@ func main() {
   // Use the http.NewServeMux() function to initialize a new servemux,
   // then register the home function as the handler for the "/' URL pattern.
   mux := http.NewServeMux()
-  mux.HandleFunc("/{$}", home)
-  mux.HandleFunc("/snippet/view/{id}", snippetView)  // Add the {id} wildcard segment
-  mux.HandleFunc("/snippet/create", snippetCreate)
+  mux.HandleFunc("GET /{$}", home)
+  mux.HandleFunc("GET /snippet/view/{id}", snippetView)  // Add the {id} wildcard segment
+  mux.HandleFunc("GET /snippet/create", snippetCreate)
+  mux.HandleFunc("POST /snippet/create", snippetCreatePost)
 
   // Print a log message to say that the server is starting.
   log.Print("starting server on :4000")
