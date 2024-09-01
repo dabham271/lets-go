@@ -2,10 +2,14 @@ package main
 
 import (
   "flag"
-  "log/slog" // New import
+  "log/slog"
   "net/http"
-  "os"       // New import
+  "os"
 )
+
+type application struct {
+  logger *slog.Logger
+}
 
 func main() {
 
@@ -32,6 +36,12 @@ func main() {
   // writes to the standard out stream and uses the default settings.
   logger := slog.New(slog.NewJSONHandler(os.Stdout, &slog.HandlerOptions{AddSource: true}))
 
+  // Initialize a new instance of our application struct, containing the
+  // dependencies (for now, just the structured logger).
+  app := &application{
+    logger: logger,
+  }
+
   mux := http.NewServeMux()
 
   // Create a file server which serves files out of the "./ui/static" directory.
@@ -44,11 +54,12 @@ func main() {
   // "/static" prefix before the request reaches the file server.
   mux.Handle("GET /static/", http.StripPrefix("/static", fileServer))
 
-  // Register the other application routes as normal.
-  mux.HandleFunc("GET /{$}", home)
-  mux.HandleFunc("GET /snippet/view/{id}", snippetView)
-  mux.HandleFunc("GET /snippet/create", snippetCreate)
-  mux.HandleFunc("POST /snippet/create", snippetCreatePost)
+  // Swap the route declarations to use the application struct's methods as the
+  // handler functions.
+  mux.HandleFunc("GET /{$}", app.home)
+  mux.HandleFunc("GET /snippet/view/{id}", app.snippetView)
+  mux.HandleFunc("GET /snippet/create", app.snippetCreate)
+  mux.HandleFunc("POST /snippet/create", app.snippetCreatePost)
 
   // Use the Info() method to log the starting server message at Info severity
   // (along with the listen address as an attribute).
