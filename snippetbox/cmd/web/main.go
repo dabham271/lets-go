@@ -1,11 +1,31 @@
 package main
 
 import (
+  "flag" // New import
   "log"
   "net/http"
 )
 
 func main() {
+
+  type config struct {
+    addr      string
+    staticDir string
+  }
+
+  var cfg config
+
+  // Define a new command-line flag with the name 'addr', a default value of ":4000"
+  // and some short help text explaining what the flag controls. THe value of the
+  // flag will be stored in the addr variable at runtime.
+  flag.StringVar(&cfg.addr, "addr", ":4000", "HTTP network address")
+
+  // Importantly, we use the flag.Parse() function to parse the command-line flag.
+  // This reads in the command-line flag value and assigns it to the addr
+  // variable. You need to call this *before* you use the addr variable
+  // otherwise it will always contain the default value of ":4000". If any errors are
+  // encountered during parsing, the application will be terminated.
+  flag.Parse()
 
   mux := http.NewServeMux()
 
@@ -25,8 +45,14 @@ func main() {
   mux.HandleFunc("GET /snippet/create", snippetCreate)
   mux.HandleFunc("POST /snippet/create", snippetCreatePost)
 
-  log.Print("starting server on :4000")
+  // The value returned from the flag.String() function is a pointer to the flag
+  // value, not the value itself. So in this code, that means the addr variable
+  // is actually a pointer, and we need to dereference it (i.e. prefix it with
+  // the * symbol) before using it. Note that we're using the log.Printf()
+  // function to interpolate the address with the log message.
+  log.Printf("starting server on %s", cfg.addr)
 
-  err := http.ListenAndServe(":4000", mux)
+  // ANd we pass the dereferenced addr pointer to http.ListenAndServe() too.
+  err := http.ListenAndServe(cfg.addr, mux)
   log.Fatal(err)
 }
